@@ -9,6 +9,8 @@ import { WeatherChat } from './WeatherChat';
 import { WindChart } from './WindChart';
 import { PrecipitationChart } from './PrecipitationChart';
 import { ComfortIndex } from './ComfortIndex';
+import { HourlyForecast } from '@/components/HourlyForecast';
+import { format } from 'date-fns';
 import type { WeatherData, AirQualityData } from '@/lib/types';
 
 interface WeatherGridProps {
@@ -20,6 +22,9 @@ interface WeatherGridProps {
       temp: number;
       humidity: number;
     };
+    weather: Array<{
+      icon: string;
+    }>;
     rain?: {
       probability: number;
       amount: number;
@@ -39,6 +44,19 @@ export function WeatherGrid({ weather, airQuality, forecast }: WeatherGridProps)
     probability: item.rain?.probability || 0,
     amount: item.rain?.amount || 0
   }));
+
+  const specificTimes = ['20:30', '23:30', '02:30', '05:30', '11:00'];
+  const hourlyForecast = forecast
+    .filter((_, index) => index < 24)
+    .filter(item => {
+      const timeStr = format(new Date(item.dt * 1000), 'HH:mm');
+      return specificTimes.includes(timeStr);
+    })
+    .map(item => ({
+      time: format(new Date(item.dt * 1000), 'HH:mm'),
+      temperature: item.main.temp,
+      weatherCode: item.weather[0].icon
+    }));
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 animate-float">
@@ -70,6 +88,9 @@ export function WeatherGrid({ weather, airQuality, forecast }: WeatherGridProps)
         sunset={weather.sys.sunset}
       />
       <WeatherSummary weather={weather} airQuality={airQuality} />
+      <div className="lg:col-span-2">
+        <HourlyForecast forecast={hourlyForecast} />
+      </div>
       <WeatherChat />
     </div>
   );
